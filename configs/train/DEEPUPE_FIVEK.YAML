@@ -1,0 +1,93 @@
+# Copyright 2023 Dakewe Biotech Corporation. All Rights Reserved.
+# Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ==============================================================================
+# experiment name
+EXP_NAME: DEEPUPE_FIVEK
+# random number seed
+SEED: 0
+# run device model
+DEVICE_ID: 3
+
+# Model configuration
+MODEL:
+  NAME: deep_upe
+  IN_CHANNELS: 3
+  OUT_CHANNELS: 4
+  LUMA_BINS: 8
+  CHANNEL_MULTIPLIER: 1
+  SPATIAL_BIN: 8
+  BATCH_NORM: True
+  LOW_RESOLUTION_SIZE: 256
+  COMPILED: True
+
+TRAIN:
+  DATASET:
+    GT_IMAGES_DIR: ./data/MIT-AdobeFiveK/train/gt
+    INPUT_IMAGES_DIR: ./data/MIT-AdobeFiveK/train/input
+
+    LOW_RESOLUTION_SIZE: 256
+    HIGH_RESOLUTION_SIZE: 512
+
+  # Model file address, used for pre-training and recovery training
+  CHECKPOINT:
+    PRETRAINED_MODEL: ""
+    RESUMED_MODEL: ""
+
+  # training hyperparameters
+  HYP:
+    IMGS_PER_BATCH: 16
+    SHUFFLE: True
+    NUM_WORKERS: 4
+    PIN_MEMORY: True
+    PERSISTENT_WORKERS: True
+
+    EPOCHS: 100
+    LR: 0.0001
+    BETAS: [ 0.9, 0.99 ]
+    EPS: 0.0001
+    WEIGHT_DECAY: 0.0
+
+  # Loss function
+  LOSSES:
+    PIXEL_LOSS:
+      NAME: MSELoss
+      WEIGHT: [ 1.0 ]
+    COLOR_LOSS:
+      NAME: vanilla
+      WEIGHT: [ 0.2 ]
+    TV_LOSS:
+      NAME: vanilla
+      WEIGHT: [ 0.05 ]
+
+  PRINT_FREQ: 100
+
+TEST:
+  DATASET:
+    GT_IMAGES_DIR: ./data/MIT-AdobeFiveK/test/gt
+    INPUT_IMAGES_DIR: ./data/MIT-AdobeFiveK/test/input
+
+  # test hyperparameters
+  HYP:
+    IMGS_PER_BATCH: 1
+    SHUFFLE: False
+    NUM_WORKERS: 1
+    PIN_MEMORY: True
+    PERSISTENT_WORKERS: True
+
+  # only test Y channel
+  ONLY_TEST_Y_CHANNEL: True
+
+
+  SAVE_IMAGE: False
+  SAVE_DIR_PATH: None
+  PRINT_FREQ: 10
