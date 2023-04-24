@@ -20,7 +20,7 @@ DEVICE_ID: 0
 # Image quality assessment method
 ONLY_TEST_Y_CHANNEL: True
 # model address
-MODEL_PATH: ./results/DEEPUPE_FIVEK/last.pth.tar
+MODEL_PATH: ./results/pretrained_models/DEEPUPE_FIVEK-431765a1.pth.tar
 
 # Model configuration
 MODEL:

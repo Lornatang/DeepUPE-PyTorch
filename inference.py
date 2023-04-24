@@ -13,7 +13,6 @@
 # ==============================================================================
 import argparse
 import os
-from typing import Any
 
 import cv2
 import torch
@@ -90,7 +89,7 @@ if __name__ == "__main__":
                         help="Whether to compile the model state.")
     parser.add_argument("--model_weights_path",
                         type=str,
-                        default="./results/DEEPUPE_FIVEK/last.pth.tar",
+                        default="./results/pretrained_models/DEEPUPE_FIVEK-431765a1.pth.tar",
                         help="Model weights file path.")
     parser.add_argument("--half",
                         action="store_true",
