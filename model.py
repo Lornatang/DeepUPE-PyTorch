@@ -351,6 +351,12 @@ class TVLoss(nn.Module):
 
 
 def deep_upe(**kwargs) -> DeepUPE:
-    model = DeepUPE(**kwargs)
+    model = DeepUPE(in_channels=3,
+                    out_channels=4,
+                    luma_bins=8,
+                    channel_multiplier=1,
+                    spatial_bin=8,
+                    batch_norm=True,
+                    **kwargs)
 
     return model
