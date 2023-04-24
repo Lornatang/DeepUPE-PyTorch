@@ -27,9 +27,43 @@ from imgproc import tensor_to_image
 from utils import build_iqa_model, load_pretrained_state_dict, make_directory, AverageMeter, ProgressMeter, Summary
 
 
+def main() -> None:
+    # read configuration file
+    with open("configs/test/DEEPUPE_FIVEK.YAML", "r") as f:
+        config = yaml.full_load(f)
+
+    # Enable TensorFloat32 tensor cores for float32 matrix multiplication available but not enabled
+    torch.set_float32_matmul_precision("high")
+
+    device = torch.device("cuda", config["DEVICE_ID"])
+    test_data_prefetcher = load_dataset(config, device)
+    cr_model = build_model(config, device)
+    psnr_model, ssim_model = build_iqa_model(0, config["ONLY_TEST_Y_CHANNEL"], device)
+
+    # Load model weights
+    cr_model = load_pretrained_state_dict(cr_model, config["MODEL"]["COMPILED"], config["MODEL_PATH"])
+
+    # Create a directory for saving test results
+    save_dir_path = os.path.join(config["SAVE_DIR_PATH"], config["EXP_NAME"])
+    if config["SAVE_IMAGE"]:
+        make_directory(save_dir_path)
+
+    psnr, ssim = test(cr_model,
+                      test_data_prefetcher,
+                      psnr_model,
+                      ssim_model,
+                      device,
+                      config["PRINT_FREQ"],
+                      config["SAVE_IMAGE"],
+                      save_dir_path)
+
+    print(f"PSNR: {psnr:.2f} dB\n"
+          f"SSIM: {ssim:.4f} [u]\n")
+
+
 def load_dataset(config: Any, device: torch.device) -> CUDAPrefetcher:
-    test_datasets = PairedImageDataset(config["DATASET"]["PAIRED_TEST_GT_IMAGES_DIR"],
-                                       config["DATASET"]["PAIRED_TEST_LR_IMAGES_DIR"])
+    test_datasets = PairedImageDataset(config["DATASET"]["GT_IMAGES_DIR"],
+                                       config["DATASET"]["INPUT_IMAGES_DIR"])
     test_dataloader = DataLoader(test_datasets,
                                  batch_size=config["HYP"]["IMGS_PER_BATCH"],
                                  shuffle=config["HYP"]["SHUFFLE"],
@@ -43,17 +77,20 @@ def load_dataset(config: Any, device: torch.device) -> CUDAPrefetcher:
 
 
 def build_model(config: Any, device: torch.device) -> nn.Module | Any:
-    g_model = model.__dict__[config["MODEL"]["NAME"]](in_channels=config["MODEL"]["IN_CHANNELS"],
-                                                      out_channels=config["MODEL"]["OUT_CHANNELS"],
-                                                      channels=config["MODEL"]["CHANNELS"],
-                                                      num_rcb=config["MODEL"]["NUM_RCB"])
-    g_model = g_model.to(device)
+    cr_model = model.__dict__[config["MODEL"]["NAME"]](in_channels=config["MODEL"]["IN_CHANNELS"],
+                                                       out_channels=config["MODEL"]["OUT_CHANNELS"],
+                                                       luma_bins=config["MODEL"]["LUMA_BINS"],
+                                                       channel_multiplier=config["MODEL"]["CHANNEL_MULTIPLIER"],
+                                                       spatial_bin=config["MODEL"]["SPATIAL_BIN"],
+                                                       batch_norm=config["MODEL"]["BATCH_NORM"],
+                                                       low_resolution_size=config["MODEL"]["LOW_RESOLUTION_SIZE"])
+    cr_model = cr_model.to(device)
 
     # Compile model
     if config["MODEL"]["COMPILED"]:
-        g_model = torch.compile(g_model)
+        cr_model = torch.compile(cr_model)
 
-    return g_model
+    return cr_model
 
 
 def test(
@@ -142,37 +179,6 @@ def test(
     progress.display_summary()
 
     return psnres.avg, ssimes.avg
-
-
-def main() -> None:
-    # read configuration file
-    with open("configs/test/PMIGAN_C32N8/PMIGAN_C32N8_BASE.yaml", "r") as f:
-        config = yaml.full_load(f)
-
-    device = torch.device("cuda", config["DEVICE_ID"])
-    test_data_prefetcher = load_dataset(config, device)
-    cr_model = build_model(config, device)
-    psnr_model, ssim_model = build_iqa_model(0, config["ONLY_TEST_Y_CHANNEL"], device)
-
-    # Load model weights
-    cr_model = load_pretrained_state_dict(cr_model, config["MODEL"]["COMPILED"], config["MODEL_PATH"])
-
-    # Create a directory for saving test results
-    save_dir_path = os.path.join(config["SAVE_DIR_PATH"], config["EXP_NAME"])
-    if config["SAVE_IMAGE"]:
-        make_directory(save_dir_path)
-
-    psnr, ssim = test(cr_model,
-                      test_data_prefetcher,
-                      psnr_model,
-                      ssim_model,
-                      device,
-                      config["PRINT_FREQ"],
-                      config["SAVE_IMAGE"],
-                      save_dir_path)
-
-    print(f"PSNR: {psnr:.2f} dB\n"
-          f"SSIM: {ssim:.4f} [u]\n")
 
 
 if __name__ == "__main__":

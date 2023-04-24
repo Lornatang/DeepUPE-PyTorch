@@ -57,8 +57,8 @@ def main():
     # Because the size of the input image is fixed, the fixed CUDNN convolution method can greatly increase the running speed
     cudnn.benchmark = True
 
-    # Initialize the mixed precision method
-    scaler = amp.GradScaler()
+    # Enable TensorFloat32 tensor cores for float32 matrix multiplication available but not enabled
+    torch.set_float32_matmul_precision("high")
 
     # Define the running device number
     device = torch.device("cuda", config["DEVICE_ID"])
@@ -101,6 +101,9 @@ def main():
 
     # create model training log
     writer = SummaryWriter(os.path.join("samples", "logs", config["EXP_NAME"]))
+
+    # Initialize the mixed precision method
+    scaler = amp.GradScaler()
 
     for epoch in range(start_epoch, config["TRAIN"]["HYP"]["EPOCHS"]):
         train(cr_model,

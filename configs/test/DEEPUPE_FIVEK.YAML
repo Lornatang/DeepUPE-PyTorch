@@ -1,0 +1,51 @@
+# Copyright 2023 Dakewe Biotech Corporation. All Rights Reserved.
+# Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ==============================================================================
+# experiment name
+EXP_NAME: DEEPUPE_FIVEK
+# random number seed
+SEED: 0
+# run device model
+DEVICE_ID: 0
+# Image quality assessment method
+ONLY_TEST_Y_CHANNEL: True
+# model address
+MODEL_PATH: ./results/DEEPUPE_FIVEK/last.pth.tar
+
+# Model configuration
+MODEL:
+  NAME: deep_upe
+  IN_CHANNELS: 3
+  OUT_CHANNELS: 4
+  LUMA_BINS: 8
+  CHANNEL_MULTIPLIER: 1
+  SPATIAL_BIN: 8
+  BATCH_NORM: True
+  LOW_RESOLUTION_SIZE: 256
+  COMPILED: True
+
+DATASET:
+  GT_IMAGES_DIR: ./data/MIT-AdobeFiveK/test/gt
+  INPUT_IMAGES_DIR: ./data/MIT-AdobeFiveK/test/input
+
+# test hyperparameters
+HYP:
+  IMGS_PER_BATCH: 1
+  SHUFFLE: False
+  NUM_WORKERS: 1
+  PIN_MEMORY: True
+  PERSISTENT_WORKERS: True
+
+SAVE_IMAGE: True
+SAVE_DIR_PATH: ./results/test
+PRINT_FREQ: 10

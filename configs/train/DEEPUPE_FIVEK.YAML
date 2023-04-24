@@ -16,7 +16,7 @@ EXP_NAME: DEEPUPE_FIVEK
 # random number seed
 SEED: 0
 # run device model
-DEVICE_ID: 3
+DEVICE_ID: 0
 
 # Model configuration
 MODEL:
